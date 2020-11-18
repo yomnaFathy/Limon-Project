@@ -2,27 +2,27 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from sqlalchemy.exc import IntegrityError
 from flask_bcrypt import Bcrypt
-# from app import db, bcrypt
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import SignatureExpired, BadSignature
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
+TWO_WEEKS = 1209600
 
 class User(UserMixin, db.Model):
 
-    __tablename__ = 'user'
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(225), unique=True, nullable=False)
     password = db.Column(db.String(), nullable=False)
 
     def __init__(self, email, password):
-        # self.id = id
         self.email = email
         self.password = User.hashed_password(password) 
 
     @staticmethod
     def create_user(email, password):
         user = User(
-            # id = self.id,
             email = email,
             password = password
         )
@@ -30,7 +30,7 @@ class User(UserMixin, db.Model):
         try:
             db.session.add(user)
             db.session.commit()
-            return True
+            return user
         except IntegrityError:
             return False
     
@@ -50,4 +50,20 @@ class User(UserMixin, db.Model):
             return user
         else:
             return False
-            
+      
+    def generate_token(user, SECRET_KEY, expiration=TWO_WEEKS):
+        s = Serializer(SECRET_KEY, expires_in=expiration)
+        token = s.dumps({
+            'id': user.id,
+            'email': user.email,
+        }).decode('utf-8')
+        return token
+
+    @staticmethod 
+    def verify_token(token, SECRET_KEY):
+        s = Serializer(SECRET_KEY)
+        try:
+            data = s.loads(token)
+        except (BadSignature, SignatureExpired):
+            return None
+        return data

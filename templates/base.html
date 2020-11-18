@@ -27,11 +27,11 @@
                             </a>
                             {% endif %}
                             {% if not current_user.is_authenticated %}
-                            <a href="{{ url_for('login') }}" class="navbar-item">
+                            <a href="{{ url_for('login_post') }}" class="navbar-item">
                                 Login
                             </a>
                             
-                            <a href="{{ url_for('signup') }}" class="navbar-item">
+                            <a href="{{ url_for('signup_post') }}" class="navbar-item">
                                 Sign Up
                             </a>
                             {% endif %}
